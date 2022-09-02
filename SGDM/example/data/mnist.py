@@ -1,0 +1,49 @@
+import torch
+import torchvision
+import torchvision.transforms as transforms
+from torch.utils.data import DataLoader
+
+from utility.cutout import Cutout
+
+
+class MNIST:
+    def __init__(self, batch_size, threads):
+        mean, std = self._get_statistics()
+
+        train_transform = transforms.Compose([
+            torchvision.transforms.Resize(size=(32,32)),
+            #torchvision.transforms.RandomCrop(size=(32, 32), padding=4),
+            torchvision.transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize(mean, std),
+            Cutout()
+        ])
+
+        test_transform = transforms.Compose([
+            torchvision.transforms.Resize(size=(32,32)),
+            #torchvision.transforms.RandomCrop(size=(32, 32), padding=4),
+            transforms.ToTensor(),
+            transforms.Normalize(mean, std)
+        ])
+
+        train_set = torchvision.datasets.MNIST(root='./data', train=True, download=True, transform=train_transform)
+        test_set = torchvision.datasets.MNIST(root='./data', train=False, download=True, transform=test_transform)
+
+        tr_split_len = 20000
+        te_split_len = 4000
+        part_tr =  torch.utils.data.random_split(train_set, [tr_split_len, len(train_set)-tr_split_len])[0]
+        part_te =  torch.utils.data.random_split(test_set, [te_split_len, len(test_set)-te_split_len])[0]
+        
+        self.train = torch.utils.data.DataLoader(part_tr, batch_size=batch_size, shuffle=True, num_workers=threads)
+        self.test = torch.utils.data.DataLoader(part_te, batch_size=batch_size, shuffle=False, num_workers=threads)
+
+        #self.train = torch.utils.data.DataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=threads)
+        #self.test = torch.utils.data.DataLoader(test_set, batch_size=batch_size, shuffle=False, num_workers=threads)
+
+        self.classes = ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9')
+
+    def _get_statistics(self):
+        train_set = torchvision.datasets.MNIST(root='./mnist', train=True, download=True, transform=transforms.ToTensor())
+
+        data = torch.cat([d[0] for d in DataLoader(train_set)])
+        return data.mean(dim=[0, 2, 3]), data.std(dim=[0, 2, 3])
