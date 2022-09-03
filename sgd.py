@@ -7,6 +7,7 @@ class SGD(Optimizer):
         super(SGD, self).__init__(params, defaults)
 
 
+
     def __setstate__(self, state):
         super(SGD, self).__setstate__(state)
 
@@ -30,7 +31,7 @@ class SGD(Optimizer):
                 if weight_decay != 0:
                     d_p.add_(weight_decay, p.data)
                 # Apply learning rate  
-                #d_p.mul_(group['lr'])
+                d_p.mul_(group['lr'])
                 if beta != 0:
                     param_state = self.state[p]
                     if 'momentum_buffer' not in param_state:
@@ -44,5 +45,5 @@ class SGD(Optimizer):
                     else:
                         d_p = buf
 
-                p.data.add_(-group['lr'], d_p)
+                p.data.add_(-1, d_p)
         return loss 
