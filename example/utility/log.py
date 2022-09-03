@@ -3,12 +3,13 @@ import time
 
 
 class Log:
-    def __init__(self, log_each: int, initial_epoch=-1):
+    def __init__(self, log_each: int, initial_epoch=-1, file_name='result'):
         self.loading_bar = LoadingBar(length=27)
         self.best_accuracy = 0.0
         self.log_each = log_each
         self.epoch = initial_epoch
         self.string = ""
+        self.file_name = file_name
 
     def train(self, len_dataset: int) -> None:
         self.epoch += 1
@@ -50,7 +51,7 @@ class Log:
 
             print(f"{loss:12.4f}  │{100*accuracy:10.2f} %  ┃", flush=True)
             self.string += f"{loss:12.4f}  │{100*accuracy:10.2f} %  ┃"
-            with open('./result/cifar10_SGDM.txt', 'a') as f:
+            with open('./result/'+self.file_name+'.txt', 'a') as f:
                 f.write(self.string)
                 #f.write('\n')
             if accuracy > self.best_accuracy:
