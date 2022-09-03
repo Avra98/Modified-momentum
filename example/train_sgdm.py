@@ -71,7 +71,8 @@ if __name__ == "__main__":
         print(len(dataset.train))
         for batch in dataset.train:
             inputs, targets = (b.to(device) for b in batch)
-           
+            optimizer.zero_grad()
+
             # get the first term \grad E_{n}(x(tn)+\delta x1) and store it in self.state[p]["pres_grad"] (look at sgdm.py))
             enable_running_stats(model)
             predictions = model(inputs)
@@ -120,8 +121,6 @@ if __name__ == "__main__":
                 log(model, loss.cpu(), correct.cpu(), scheduler.lr())
                 if args.scheduler:
                     scheduler(epoch)
-
-        optimizer.zero_grad()
         
         model.eval()
         log.eval(len_dataset=len(dataset.test))
