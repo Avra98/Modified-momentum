@@ -3,7 +3,7 @@ import torch
 
 from model.wide_res_net import WideResNet
 from model.smooth_cross_entropy import smooth_crossentropy
-from data.cifar import Cifar10, Cifar100
+from data.cifar import Cifar10, Cifar100, FashionMNIST
 from utility.log import Log
 from utility.initialize import initialize
 from utility.step_lr import StepLR
@@ -37,13 +37,18 @@ if __name__ == "__main__":
     initialize(args, seed=42)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    in_channels = 3
-    labels = 100
     if args.dataset.lower() == 'cifar10':
         dataset = Cifar10(args.batch_size, args.threads)
+        in_channels = 3
         labels = 10
-    if args.dataset.lower() == 'cifar100':
+    elif args.dataset.lower() == 'cifar100':
         dataset = Cifar100(args.batch_size, args.threads)
+        in_channels = 3
+        labels = 100
+    else:
+        in_channels = 1
+        dataset = FashionMNIST(args.batch_size, args.threads)
+        labels = 10
 
     log = Log(log_each=10, file_name= args.dataset+'lr'+str(int(1e3*args.learning_rate))
                                           +'beta'+str(int(10*args.momentum))
@@ -53,7 +58,6 @@ if __name__ == "__main__":
                                           +'depth'+str(args.depth)
                                           +'adaptive'+str(args.adaptive))
 
-    ## Use in_channels=1 if MNIST or 3 if CIFAR-10. 
     model = WideResNet(args.depth, args.width_factor, args.dropout, in_channels=in_channels, labels=labels).to(device)
 
     #base_optimizer = torch.optim.SGD
