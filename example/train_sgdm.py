@@ -31,6 +31,7 @@ if __name__ == "__main__":
     #parser.add_argument("--rho", default=2.0, type=int, help="Rho parameter for SAM.")
     parser.add_argument("--weight_decay", default=0.0000, type=float, help="L2 weight decay.")
     parser.add_argument("--width_factor", default=4, type=int, help="How many times wider compared to normal ResNet.")
+    parser.add_argument("--t", default=0.1, type=float, help="t for sgdm_t")
     #parser.add_argument("dampening", default=0.0, type=float,help="dampening")
     #parser.add_argument("nesterov", default=False, type=bool,help="nesterov")
     args = parser.parse_args()
@@ -57,6 +58,7 @@ if __name__ == "__main__":
                                           +'shd'+str(args.scheduler)
                                           +'width'+str(args.width_factor)
                                           +'depth'+str(args.depth)
+                                          +'t'+str(int(args.t*10))
                                           +'method'+str(args.method))
 
     model = WideResNet(args.depth, args.width_factor, args.dropout, in_channels=in_channels, labels=labels).to(device)
@@ -67,7 +69,7 @@ if __name__ == "__main__":
     elif args.method.lower() == 'sgd':
         optimizer = SGD(model.parameters(),lr=args.learning_rate, momentum=args.momentum, weight_decay=args.weight_decay)
     else:
-        optimizer = SGDM_t(model.parameters(), lr=args.learning_rate, momentum=args.momentum, dampening=0, weight_decay=args.weight_decay,nesterov = False)
+        optimizer = SGDM_t(model.parameters(), t=args.t, lr=args.learning_rate, momentum=args.momentum, dampening=0, weight_decay=args.weight_decay,nesterov = False)
     scheduler = StepLR(optimizer, args.learning_rate, args.epochs)
     
     for epoch in range(args.epochs):
