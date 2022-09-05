@@ -12,10 +12,11 @@ from utility.bypass_bn import enable_running_stats, disable_running_stats
 import sys; sys.path.append("..")
 from sgdm import SGDM
 from sgd import SGD
+from sgdm_t import SGDM_t
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--adaptive", '-apt', action='store_false', help="True if you want to use the Adaptive SAM: default True")
+    parser.add_argument("--method", default='SGDM', type=str, help="select optimizer")
     parser.add_argument("--batch_size", default=100, type=int, help="Batch size used in the training and validation loop.")
     parser.add_argument("--depth", default=10, type=int, help="Number of layers.")
     parser.add_argument("--dropout", default=0.0, type=float, help="Dropout rate.")
@@ -56,15 +57,17 @@ if __name__ == "__main__":
                                           +'shd'+str(args.scheduler)
                                           +'width'+str(args.width_factor)
                                           +'depth'+str(args.depth)
-                                          +'adaptive'+str(args.adaptive))
+                                          +'method'+str(args.method))
 
     model = WideResNet(args.depth, args.width_factor, args.dropout, in_channels=in_channels, labels=labels).to(device)
 
     #base_optimizer = torch.optim.SGD
-    if args.adaptive:
+    if args.method.lower() == 'sgdm':
         optimizer = SGDM(model.parameters(), lr=args.learning_rate, momentum=args.momentum, dampening=0, weight_decay=args.weight_decay,nesterov = False)
-    else:
+    elif args.method.lower() == 'sgd':
         optimizer = SGD(model.parameters(),lr=args.learning_rate, momentum=args.momentum, weight_decay=args.weight_decay)
+    else:
+        optimizer = SGDM_t(model.parameters(), lr=args.learning_rate, momentum=args.momentum, dampening=0, weight_decay=args.weight_decay,nesterov = False)
     scheduler = StepLR(optimizer, args.learning_rate, args.epochs)
     
     for epoch in range(args.epochs):
@@ -84,7 +87,7 @@ if __name__ == "__main__":
             loss.mean().backward()
             
             # SGD
-            if args.adaptive == False:
+            if args.method.lower() == 'sgd':
                 optimizer.step()
                 with torch.no_grad():
                     predictions = model(inputs)
