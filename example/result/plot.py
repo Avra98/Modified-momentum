@@ -2,16 +2,17 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-files = os.listdir('./logs/')
+root = './'
+files = os.listdir(root)
 for file in files:
-    if 'adaptiveFalse.txt' in file and file[-3:] == 'txt': 
+    if ('adaptiveFalse.txt' in file) or ('sgd.txt' in file) and file[-3:] == 'txt': 
         SGDM_train,SGDM_test = [],[]
         SGD_train,SGD_test = [],[]
         #SUM_train,SUM_test = [],[]
 
         # SGD
         epoch_last = 0
-        with open('./logs/'+file) as f: 
+        with open(root+file) as f: 
             for line in f.readlines():
                 if "┃" not in line:
                     continue
@@ -29,7 +30,11 @@ for file in files:
 
         # SGDM
         epoch_last = 0
-        with open('./logs/'+file.replace("adaptiveFalse", "adaptiveTrue")) as f:
+        if 'adaptive' in file:
+            file = file.replace("adaptiveFalse", "adaptiveTrue")
+        else:
+            file = file.replace("sgd", "sgdm")
+        with open(root+file) as f:
             for line in f.readlines():
                 if "┃" not in line:
                     continue
@@ -50,13 +55,13 @@ for file in files:
         width = file.split('width')[1][0]
         depth = file.split('depth')[1].split('adaptive')[0]
         dataset = file.split('lr')[0]
-        name = dataset +':'+ 'beta='+beta+',lr='+lr+','+'width='+width+',depth='+depth+'\n SGD:'+str(best_sgd)+', SGDM:'+str(best_sgdm)
+        name = dataset +':'+ 'beta='+beta+',lr='+lr+','+'width='+width+',depth='+depth+'\n SGD:'+str(best_sgd)+', SGDMt:'+str(best_sgdm)
         
         plt.figure(figsize=(8,5))
         plt.plot(SGD_train,'r',label='SGD_train_acc')
         plt.plot(SGD_test,'b', label='SGD_test_acc')
-        plt.plot(SGDM_train,'y',label='SGDM_train_acc')
-        plt.plot(SGDM_test,'c',label='SGDM_test_acc')
+        plt.plot(SGDM_train,'y',label='SGDMt_train_acc')
+        plt.plot(SGDM_test,'c',label='SGDMt_test_acc')
         #plt.plot(SUM_train,'g',label='SUM_train_acc')
         #plt.plot(SUM_test,'orange',label='SUM_test_acc')
         #plt.show()
