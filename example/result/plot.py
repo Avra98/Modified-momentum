@@ -53,7 +53,12 @@ for file in files:
         beta = str(float(file.split('beta')[1][0])/10)
         lr   = str(float(file.split('lr')[1].split('beta')[0])/1e3)
         width = file.split('width')[1][0]
-        depth = file.split('depth')[1].split('adaptive')[0]
+        
+        if 'adaptive' in file:
+            depth = file.split('depth')[1].split('adaptive')[0]
+        else:
+            depth = file.split('depth')[1].split('t')[0]
+
         dataset = file.split('lr')[0]
         name = dataset +':'+ 'beta='+beta+',lr='+lr+','+'width='+width+',depth='+depth+'\n SGD:'+str(best_sgd)+', SGDM:'+str(best_sgdm)
         
