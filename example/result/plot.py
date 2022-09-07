@@ -55,13 +55,13 @@ for file in files:
         width = file.split('width')[1][0]
         depth = file.split('depth')[1].split('adaptive')[0]
         dataset = file.split('lr')[0]
-        name = dataset +':'+ 'beta='+beta+',lr='+lr+','+'width='+width+',depth='+depth+'\n SGD:'+str(best_sgd)+', SGDMt:'+str(best_sgdm)
+        name = dataset +':'+ 'beta='+beta+',lr='+lr+','+'width='+width+',depth='+depth+'\n SGD:'+str(best_sgd)+', SGDM:'+str(best_sgdm)
         
         plt.figure(figsize=(8,5))
         plt.plot(SGD_train,'r',label='SGD_train_acc')
         plt.plot(SGD_test,'b', label='SGD_test_acc')
-        plt.plot(SGDM_train,'y',label='SGDMt_train_acc')
-        plt.plot(SGDM_test,'c',label='SGDMt_test_acc')
+        plt.plot(SGDM_train,'y',label='SGDM_train_acc')
+        plt.plot(SGDM_test,'c',label='SGDM_test_acc')
         #plt.plot(SUM_train,'g',label='SUM_train_acc')
         #plt.plot(SUM_test,'orange',label='SUM_test_acc')
         #plt.show()
