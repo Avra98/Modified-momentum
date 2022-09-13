@@ -11,8 +11,8 @@ class Cifar100:
         mean, std = self._get_statistics()
 
         train_transform = transforms.Compose([
-            torchvision.transforms.RandomResizedCrop(size=size),
-            torchvision.transforms.RandomHorizontalFlip(),
+            #transforms.RandomCrop(32, padding=4),
+            #torchvision.transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
             transforms.Normalize(mean, std),
             Cutout()
@@ -41,8 +41,8 @@ class Cifar10:
         mean, std = self._get_statistics()
 
         train_transform = transforms.Compose([
-            torchvision.transforms.RandomResizedCrop(size=size),
-            torchvision.transforms.RandomHorizontalFlip(),
+            #transforms.RandomCrop(32, padding=4),
+            #torchvision.transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
             transforms.Normalize(mean, std),
             Cutout()
@@ -72,8 +72,8 @@ class FashionMNIST:
         mean, std = self._get_statistics()
 
         train_transform = transforms.Compose([
-            torchvision.transforms.RandomResizedCrop(size=size),
-            torchvision.transforms.RandomHorizontalFlip(),
+            #transforms.RandomCrop(32, padding=4),
+            #torchvision.transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
             torchvision.transforms.Lambda(lambda x: torch.cat([x, x, x], dim=0)),
             transforms.Normalize(mean, std),
