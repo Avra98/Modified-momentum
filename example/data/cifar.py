@@ -7,18 +7,19 @@ from utility.cutout import Cutout
 
 
 class Cifar100:
-    def __init__(self, batch_size, threads):
+    def __init__(self, batch_size, threads, size=(32, 32)):
         mean, std = self._get_statistics()
 
         train_transform = transforms.Compose([
-            torchvision.transforms.RandomCrop(size=(32, 32), padding=4),
-            torchvision.transforms.RandomHorizontalFlip(),
+            #transforms.RandomCrop(32, padding=4),
+            #torchvision.transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
             transforms.Normalize(mean, std),
             Cutout()
         ])
 
         test_transform = transforms.Compose([
+            torchvision.transforms.Resize(size=size),
             transforms.ToTensor(),
             transforms.Normalize(mean, std)
         ])
@@ -29,8 +30,6 @@ class Cifar100:
         self.train = torch.utils.data.DataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=threads)
         self.test = torch.utils.data.DataLoader(test_set, batch_size=batch_size, shuffle=False, num_workers=threads)
 
-        #self.classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
-
     def _get_statistics(self):
         train_set = torchvision.datasets.CIFAR100(root='./data', train=True, download=True, transform=transforms.ToTensor())
 
@@ -38,18 +37,19 @@ class Cifar100:
         return data.mean(dim=[0, 2, 3]), data.std(dim=[0, 2, 3])
 
 class Cifar10:
-    def __init__(self, batch_size, threads):
+    def __init__(self, batch_size, threads, size=(32, 32)):
         mean, std = self._get_statistics()
 
         train_transform = transforms.Compose([
-            torchvision.transforms.RandomCrop(size=(32, 32), padding=4),
-            torchvision.transforms.RandomHorizontalFlip(),
+            #transforms.RandomCrop(32, padding=4),
+            #torchvision.transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
             transforms.Normalize(mean, std),
             Cutout()
         ])
 
         test_transform = transforms.Compose([
+            torchvision.transforms.Resize(size=size),
             transforms.ToTensor(),
             transforms.Normalize(mean, std)
         ])
@@ -60,8 +60,6 @@ class Cifar10:
         self.train = torch.utils.data.DataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=threads)
         self.test = torch.utils.data.DataLoader(test_set, batch_size=batch_size, shuffle=False, num_workers=threads)
 
-        #self.classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
-
     def _get_statistics(self):
         train_set = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transforms.ToTensor())
 
@@ -70,20 +68,22 @@ class Cifar10:
 
 
 class FashionMNIST:
-    def __init__(self, batch_size, threads):
+    def __init__(self, batch_size, threads, size=(32, 32)):
         mean, std = self._get_statistics()
 
         train_transform = transforms.Compose([
-            torchvision.transforms.RandomCrop(size=(32, 32), padding=4),
-            torchvision.transforms.RandomHorizontalFlip(),
+            #transforms.RandomCrop(32, padding=4),
+            #torchvision.transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
+            torchvision.transforms.Lambda(lambda x: torch.cat([x, x, x], dim=0)),
             transforms.Normalize(mean, std),
             Cutout()
         ])
 
         test_transform = transforms.Compose([
-            torchvision.transforms.Resize(size=(32, 32)),
+            torchvision.transforms.Resize(size=size),
             transforms.ToTensor(),
+            torchvision.transforms.Lambda(lambda x: torch.cat([x, x, x], dim=0)),
             transforms.Normalize(mean, std)
         ])
 
@@ -92,8 +92,6 @@ class FashionMNIST:
 
         self.train = torch.utils.data.DataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=threads)
         self.test = torch.utils.data.DataLoader(test_set, batch_size=batch_size, shuffle=False, num_workers=threads)
-
-        #self.classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
     def _get_statistics(self):
         train_set = torchvision.datasets.FashionMNIST(root='./data', train=True, download=True, transform=transforms.ToTensor())
