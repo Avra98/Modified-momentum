@@ -23,7 +23,7 @@ if __name__ == "__main__":
     parser.add_argument("--weight_decay", default=0.0000, type=float, help="L2 weight decay.")
     args = parser.parse_args()
 
-    initialize(args, seed=3407)
+    initialize(args, seed=42)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     labels = 10

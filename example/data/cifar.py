@@ -74,6 +74,7 @@ class FashionMNIST:
         train_transform = transforms.Compose([
             #transforms.RandomCrop(32, padding=4),
             #torchvision.transforms.RandomHorizontalFlip(),
+            torchvision.transforms.Resize(size=size),
             transforms.ToTensor(),
             torchvision.transforms.Lambda(lambda x: torch.cat([x, x, x], dim=0)),
             transforms.Normalize(mean, std),
