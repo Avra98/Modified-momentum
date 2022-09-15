@@ -21,9 +21,11 @@ if __name__ == "__main__":
     parser.add_argument("--dataset", default="cifar10", type=str, help="dataset name")
     parser.add_argument("--threads", default=4, type=int, help="Number of CPU threads for dataloaders.")
     parser.add_argument("--weight_decay", default=0.0000, type=float, help="L2 weight decay.")
+    parser.add_argument("--seed", default=42, type=int, help="L2 weight decay.")
+
     args = parser.parse_args()
 
-    initialize(args, seed=42)
+    initialize(args, seed=args.seed)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     labels = 10
@@ -50,7 +52,8 @@ if __name__ == "__main__":
 
     log = Log(log_each=10, file_name= args.dataset+'lr'+str(int(1e3*args.learning_rate))
                                           +'beta'+str(int(10*args.momentum))
-                                          +'model'+str(args.model))
+                                          +'model'+str(args.model)
+                                          +'seed'+str(args.seed))
 
     criterion = torch.nn.CrossEntropyLoss(reduce=False)
     optimizer = SGD(model.parameters(),lr=args.learning_rate, momentum=args.momentum, 

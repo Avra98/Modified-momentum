@@ -1,8 +1,13 @@
 import os 
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
+from scipy.interpolate import make_interp_spline
 
 root = './logs/'
+lr_select = 0.02
+data = 'cifar10'
+
 files = os.listdir(root)
 SGD_train,SGD_test = {},{}
 
@@ -13,6 +18,9 @@ for file in files:
         lr   = str(float(file.split('lr')[1].split('beta')[0])/1e3)
         model= file.split('model')[1].split('.')[0]
         dataset = file.split('lr')[0]
+
+        if abs(float(lr)/(1-float(beta)) - lr_select)>1e-3 or data != dataset: 
+            continue
 
         if model == 'wide': model = 'wideresenet'
         if dataset == 'fashion': dataset = 'fashionmnist'
@@ -44,12 +52,12 @@ for file in files:
                 epoch_last=epoch
 
 
-#colors = ['#1b9e77','#d95f02','#7570b3','#e7298a']
+colors = ['#66c2a5','#fc8d62','#8da0cb','#e78ac3']
 for model in SGD_train:       
-    plt.figure(figsize=(8,5))
+    plt.figure(figsize=(6,10))
 
     best_sgd = 0
-    for i, key in enumerate(SGD_train[model]):
+    for i, key in enumerate(sorted(SGD_train[model].keys())):
 
         best_sgd_i = round(np.max(SGD_test[model][key]), 3)
         if best_sgd_i > best_sgd:
@@ -57,8 +65,19 @@ for model in SGD_train:
             k = key
 
         label = key.split(':')[1].split('(')[0]
-        plt.plot(SGD_train[model][key],label=label+'train')
-        plt.plot(SGD_test[model][key] ,label=label+'test', linestyle='dashed')
+        
+        train = pd.Series(SGD_train[model][key])
+        train_mean = train.rolling(10).mean().values[9:]
+        train_std  = train.rolling(10).std().values[9:]
+        plt.plot(train_mean, c = colors[i], label=label+'train')
+        plt.fill_between(np.arange(len(train_mean)), (train_mean-train_std), (train_mean+train_std), color = colors[i], alpha=.1)
+
+        test = pd.Series(SGD_test[model][key])
+        test_mean = test.rolling(10).mean().values[9:]
+        test_std  = test.rolling(10).std().values[9:]
+        plt.plot(test_mean, c = colors[i], label=label+'test', linestyle='dashed')
+        plt.fill_between(np.arange(len(test_mean)), (test_mean-test_std), (test_mean + test_std), color = colors[i], alpha=.1)
+
     #print(k, best_sgd)
 
     plt.legend()
@@ -66,5 +85,5 @@ for model in SGD_train:
     plt.tick_params(labelright=True, left=True, right=True)
     plt.xlabel('Epochs')
     plt.ylabel('Accuracy')
-    #plt.ylim([0.90,0.96])
-    plt.savefig('./imgs/'+model+'.png')
+    #plt.ylim([0.80,1.0])
+    plt.savefig('./imgs/'+data+'_lr'+str(int(lr_select*1e3))+'_'+model+'.png')
