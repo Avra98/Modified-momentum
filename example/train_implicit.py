@@ -7,6 +7,7 @@ from torch.optim import SGD
 from data.cifar import Cifar10, Cifar100, FashionMNIST
 from utility.log import Log
 from model.resnet import *
+from model.resnetnbn import *
 from model.densenet import *
 from model.small import *
 from model.wide_res_net import WideResNet
@@ -52,6 +53,10 @@ if __name__ == "__main__":
     elif args.model.lower() == 'wide':
         model = WideResNet(depth=16, width_factor=8, dropout=0.0, 
                     in_channels=3, labels=labels).to(device)
+    elif args.model.lower() == 'resnet18nbn':
+        model = ResNet18nbn(num_classes=labels).to(device)
+    elif args.model.lower() == 'resnet50nbn':
+        model = ResNet50nbn(num_classes=labels).to(device)
     else:
         model = smallnet(num_classes=labels).to(device)
 
