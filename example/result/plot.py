@@ -4,9 +4,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.interpolate import make_interp_spline
 
-root = './logs/'
-lr_select = 0.02
-data = 'cifar10'
+root = './'
+lr_select = 0.1
+data = 'cifar100'
+seed_select = '42'
 
 files = os.listdir(root)
 SGD_train,SGD_test = {},{}
@@ -16,16 +17,24 @@ for file in files:
         
         beta = str(float(file.split('beta')[1][0])/10)
         lr   = str(float(file.split('lr')[1].split('beta')[0])/1e3)
-        model= file.split('model')[1].split('.')[0]
+        model= file.split('model')[1].split('seed')[0]
+        seed = file.split('seed')[1].split('scheduler')[0]
         dataset = file.split('lr')[0]
-
-        if abs(float(lr)/(1-float(beta)) - lr_select)>1e-3 or data != dataset: 
+        scheduler = file.split('scheduler')
+       
+        if len(scheduler) == 1:
+            scheduler = 'False'
+        else:
+            scheduler = scheduler[1].split('.')[0]
+              
+        if abs(float(lr)/(1-float(beta)) - lr_select)>1e-3 or data != dataset or seed != seed_select: 
             continue
-
+        
         if model == 'wide': model = 'wideresenet'
         if dataset == 'fashion': dataset = 'fashionmnist'
 
         key = dataset +':'+'beta='+beta+',lr='+lr+',('+model+')'
+       
         if model not in SGD_test:
             SGD_test[model] = {}
             SGD_train[model] = {}
@@ -51,7 +60,6 @@ for file in files:
 
                 epoch_last=epoch
 
-
 colors = ['#66c2a5','#fc8d62','#8da0cb','#e78ac3']
 for model in SGD_train:       
     plt.figure(figsize=(6,10))
@@ -67,14 +75,14 @@ for model in SGD_train:
         label = key.split(':')[1].split('(')[0]
         
         train = pd.Series(SGD_train[model][key])
-        train_mean = train.rolling(10).mean().values[9:]
-        train_std  = train.rolling(10).std().values[9:]
+        train_mean = train.rolling(5).mean().values[4:]
+        train_std  = train.rolling(5).std().values[4:]
         plt.plot(train_mean, c = colors[i], label=label+'train')
         plt.fill_between(np.arange(len(train_mean)), (train_mean-train_std), (train_mean+train_std), color = colors[i], alpha=.1)
 
         test = pd.Series(SGD_test[model][key])
-        test_mean = test.rolling(10).mean().values[9:]
-        test_std  = test.rolling(10).std().values[9:]
+        test_mean = test.rolling(5).mean().values[4:]
+        test_std  = test.rolling(5).std().values[4:]
         plt.plot(test_mean, c = colors[i], label=label+'test', linestyle='dashed')
         plt.fill_between(np.arange(len(test_mean)), (test_mean-test_std), (test_mean + test_std), color = colors[i], alpha=.1)
 

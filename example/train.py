@@ -10,6 +10,7 @@ from model.resnet import *
 from model.densenet import *
 from model.wide_res_net import WideResNet
 from utility.initialize import initialize
+from torch.optim.lr_scheduler import StepLR
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -22,6 +23,7 @@ if __name__ == "__main__":
     parser.add_argument("--threads", default=4, type=int, help="Number of CPU threads for dataloaders.")
     parser.add_argument("--weight_decay", default=0.0000, type=float, help="L2 weight decay.")
     parser.add_argument("--seed", default=42, type=int, help="L2 weight decay.")
+    parser.add_argument("--scheduler", "-s", action='store_true', help="whether using scheduler.")
 
     args = parser.parse_args()
 
@@ -44,7 +46,7 @@ if __name__ == "__main__":
     elif args.model.lower() == 'resnet50':
         model = ResNet50(num_classes=labels).to(device)
     elif args.model.lower() == 'densenet121':
-        model = DenseNet121().to(device)
+        model = DenseNet121(num_classes=labels).to(device)
     elif args.model.lower() == 'wide':
         model = WideResNet(depth=16, width_factor=8, dropout=0.0, 
                     in_channels=3, labels=labels).to(device)
@@ -53,12 +55,13 @@ if __name__ == "__main__":
     log = Log(log_each=10, file_name= args.dataset+'lr'+str(int(1e3*args.learning_rate))
                                           +'beta'+str(int(10*args.momentum))
                                           +'model'+str(args.model)
-                                          +'seed'+str(args.seed))
+                                          +'seed'+str(args.seed)
+                                          +'scheduler'+str(args.scheduler))
 
     criterion = torch.nn.CrossEntropyLoss(reduce=False)
     optimizer = SGD(model.parameters(),lr=args.learning_rate, momentum=args.momentum, 
                     weight_decay=args.weight_decay, nesterov=False)
-
+    scheduler = StepLR(optimizer, step_size = args.epochs-50, gamma=0.1)
     for epoch in range(args.epochs):
         model.train()
         log.train(len_dataset=len(dataset.train))
@@ -72,7 +75,7 @@ if __name__ == "__main__":
             optimizer.step()
 
             correct = torch.argmax(predictions.data, 1) == targets
-            log(model, loss.cpu(), correct.cpu(), float(args.learning_rate))
+            log(model, loss.cpu(), correct.cpu(), optimizer.param_groups[0]['lr'])
             
         model.eval()
         log.eval(len_dataset=len(dataset.test))
@@ -82,6 +85,8 @@ if __name__ == "__main__":
                 predictions = model(inputs)
                 loss = criterion(predictions, targets)
                 correct = torch.argmax(predictions, 1) == targets
-                log(model, loss.cpu(), correct.cpu(), float(args.learning_rate))
+                log(model, loss.cpu(), correct.cpu(), optimizer.param_groups[0]['lr'])
+        if args.scheduler:
+            scheduler.step()
            
     log.flush()
