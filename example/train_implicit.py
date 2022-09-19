@@ -8,6 +8,7 @@ from data.cifar import Cifar10, Cifar100, FashionMNIST
 from utility.log import Log
 from model.resnet import *
 from model.densenet import *
+from model.small import *
 from model.wide_res_net import WideResNet
 from utility.initialize import initialize
 from torch.optim.lr_scheduler import StepLR
@@ -51,6 +52,8 @@ if __name__ == "__main__":
     elif args.model.lower() == 'wide':
         model = WideResNet(depth=16, width_factor=8, dropout=0.0, 
                     in_channels=3, labels=labels).to(device)
+    else:
+        model = smallnet(num_classes=labels).to(device)
 
 
     log = Log(log_each=10, file_name= args.dataset+'lr'+str(int(1e3*args.learning_rate))

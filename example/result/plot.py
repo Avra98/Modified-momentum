@@ -6,7 +6,7 @@ from scipy.interpolate import make_interp_spline
 
 root = './'
 lr_select = 0.1
-data = 'cifar100'
+data = 'cifar10'
 seed_select = '42'
 
 files = os.listdir(root)
@@ -62,7 +62,7 @@ for file in files:
 
 colors = ['#66c2a5','#fc8d62','#8da0cb','#e78ac3']
 for model in SGD_train:       
-    plt.figure(figsize=(6,10))
+    plt.figure(figsize=(6,8))
 
     best_sgd = 0
     for i, key in enumerate(sorted(SGD_train[model].keys())):
@@ -75,14 +75,14 @@ for model in SGD_train:
         label = key.split(':')[1].split('(')[0]
         
         train = pd.Series(SGD_train[model][key])
-        train_mean = train.rolling(5).mean().values[4:]
-        train_std  = train.rolling(5).std().values[4:]
+        train_mean = train.rolling(10).mean().values[9:]
+        train_std  = train.rolling(10).std().values[9:]
         plt.plot(train_mean, c = colors[i], label=label+'train')
         plt.fill_between(np.arange(len(train_mean)), (train_mean-train_std), (train_mean+train_std), color = colors[i], alpha=.1)
 
         test = pd.Series(SGD_test[model][key])
-        test_mean = test.rolling(5).mean().values[4:]
-        test_std  = test.rolling(5).std().values[4:]
+        test_mean = test.rolling(10).mean().values[9:]
+        test_std  = test.rolling(10).std().values[9:]
         plt.plot(test_mean, c = colors[i], label=label+'test', linestyle='dashed')
         plt.fill_between(np.arange(len(test_mean)), (test_mean-test_std), (test_mean + test_std), color = colors[i], alpha=.1)
 
