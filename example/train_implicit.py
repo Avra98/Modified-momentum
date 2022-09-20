@@ -56,7 +56,7 @@ if __name__ == "__main__":
     elif args.model.lower() == 'resnet18nbn':
         model = ResNet18nbn(num_classes=labels).to(device)
     elif args.model.lower() == 'resnet50nbn':
-        model = ResNet50nbn(num_classes=labels).to(device)
+        model = ResNet50nbn(num_classes=labels).to(device)    
     else:
         model = smallnet(num_classes=labels).to(device)
 
@@ -68,10 +68,14 @@ if __name__ == "__main__":
                                           +'implicit'+str(int(1000*args.implicit))
                                           +'scheduler'+str(args.scheduler))
 
-    criterion = torch.nn.CrossEntropyLoss(reduce=False)
+    if 'nbn' not in args.model.lower():
+        criterion = torch.nn.CrossEntropyLoss(reduce=False)
+    else:
+        criterion = torch.nn.CrossEntropyLoss(reduce=False, label_smoothing=1.0/labels)
+
     optimizer = SGD(model.parameters(),lr=args.learning_rate, momentum=args.momentum, 
                     weight_decay=args.weight_decay, nesterov=False)
-    scheduler = StepLR(optimizer, step_size = args.epochs-100, gamma=0.1)
+    scheduler = StepLR(optimizer, step_size = args.epochs-50, gamma=0.1)
 
     for epoch in range(args.epochs):
         model.train()

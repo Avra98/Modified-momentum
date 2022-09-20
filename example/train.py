@@ -59,14 +59,16 @@ if __name__ == "__main__":
     else:
         model = smallnet(num_classes=labels).to(device)
 
-
     log = Log(log_each=10, file_name= args.dataset+'lr'+str(int(1e3*args.learning_rate))
                                           +'beta'+str(int(10*args.momentum))
                                           +'model'+str(args.model)
                                           +'seed'+str(args.seed)
                                           +'scheduler'+str(args.scheduler))
+    if 'nbn' not in args.model.lower():
+        criterion = torch.nn.CrossEntropyLoss(reduce=False)
+    else:
+        criterion = torch.nn.CrossEntropyLoss(reduce=False, label_smoothing=1.0/labels)
 
-    criterion = torch.nn.CrossEntropyLoss(reduce=False)
     optimizer = SGD(model.parameters(),lr=args.learning_rate, momentum=args.momentum, 
                     weight_decay=args.weight_decay, nesterov=False)
     scheduler = StepLR(optimizer, step_size = args.epochs-50, gamma=0.1)
