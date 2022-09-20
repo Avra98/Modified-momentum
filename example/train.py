@@ -64,10 +64,10 @@ if __name__ == "__main__":
                                           +'model'+str(args.model)
                                           +'seed'+str(args.seed)
                                           +'scheduler'+str(args.scheduler))
-    if 'nbn' not in args.model.lower():
-        criterion = torch.nn.CrossEntropyLoss(reduce=False)
-    else:
-        criterion = torch.nn.CrossEntropyLoss(reduce=False, label_smoothing=1.0/labels)
+    #if 'nbn' not in args.model.lower():
+    criterion = torch.nn.CrossEntropyLoss(reduce=False)
+    #else:
+    #    criterion = torch.nn.CrossEntropyLoss(reduce=False, label_smoothing=1.0/labels)
 
     optimizer = SGD(model.parameters(),lr=args.learning_rate, momentum=args.momentum, 
                     weight_decay=args.weight_decay, nesterov=False)
@@ -81,12 +81,22 @@ if __name__ == "__main__":
 
             predictions = model(inputs)
             loss = criterion(predictions, targets)
-            loss.mean().backward()
+            loss.mean().backward(retain_graph=True, create_graph=True)
+            '''
+            loss.mean().backward(retain_graph=True, create_graph=True)
+            max_weight = max_grad = -1.0
+            for p in model.parameters():
+                d = torch.max(torch.abs(p.data)).detach().cpu()
+                g = torch.max(torch.abs(p.grad)).detach().cpu()
+                if d > max_weight:
+                    max_weight = d
+                if g > max_grad:
+                    max_grad = g
+            '''
             optimizer.step()
-
             correct = torch.argmax(predictions.data, 1) == targets
             log(model, loss.cpu(), correct.cpu(), optimizer.param_groups[0]['lr'])
-            
+        #print("w, g: ", max_weight, max_grad)  
         model.eval()
         log.eval(len_dataset=len(dataset.test))
         with torch.no_grad():
