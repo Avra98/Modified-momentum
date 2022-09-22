@@ -18,7 +18,11 @@ for file in files:
         beta = str(float(file.split('beta')[1][0])/10)
         lr   = str(float(file.split('lr')[1].split('beta')[0])/1e3)
         model= file.split('model')[1].split('seed')[0]
-        seed = file.split('seed')[1].split('scheduler')[0]
+        if "implicit" not in file:
+            seed = file.split('seed')[1].split('scheduler')[0]
+        else:
+            seed = file.split('seed')[1].split('implicit')[0]
+
         dataset = file.split('lr')[0]
         scheduler = file.split('scheduler')
        
@@ -27,13 +31,15 @@ for file in files:
         else:
             scheduler = scheduler[1].split('.')[0]
               
-        if abs(float(lr)/(1-float(beta)) - lr_select)>1e-3 or data != dataset or seed != seed_select: 
-            continue
+        #if abs(float(lr)/(1-float(beta)) - lr_select)>1e-3 or data != dataset or seed != seed_select: 
+        #    continue
         
         if model == 'wide': model = 'wideresenet'
         if dataset == 'fashion': dataset = 'fashionmnist'
 
         key = dataset +':'+'beta='+beta+',lr='+lr+',('+model+')'
+        if "implicit" in file:
+            key = dataset +':'+'beta='+beta+',lr='+lr+",implicit"+',('+model+')'
        
         if model not in SGD_test:
             SGD_test[model] = {}
@@ -60,9 +66,9 @@ for file in files:
 
                 epoch_last=epoch
 
-colors = ['#66c2a5','#fc8d62','#8da0cb','#e78ac3']
+colors = ['#66c2a5','#fc8d62','#8da0cb','#e78ac3','#a6d854','#ffd92f']
 for model in SGD_train:       
-    plt.figure(figsize=(6,8))
+    plt.figure(figsize=(8,8))
 
     best_sgd = 0
     for i, key in enumerate(sorted(SGD_train[model].keys())):
@@ -75,14 +81,14 @@ for model in SGD_train:
         label = key.split(':')[1].split('(')[0]
         
         train = pd.Series(SGD_train[model][key])
-        train_mean = train.rolling(10).mean().values[9:]
-        train_std  = train.rolling(10).std().values[9:]
+        train_mean = train.rolling(5).mean().values[4:]
+        train_std  = train.rolling(5).std().values[4:]
         plt.plot(train_mean, c = colors[i], label=label+'train')
         plt.fill_between(np.arange(len(train_mean)), (train_mean-train_std), (train_mean+train_std), color = colors[i], alpha=.1)
 
         test = pd.Series(SGD_test[model][key])
-        test_mean = test.rolling(10).mean().values[9:]
-        test_std  = test.rolling(10).std().values[9:]
+        test_mean = test.rolling(5).mean().values[4:]
+        test_std  = test.rolling(5).std().values[4:]
         plt.plot(test_mean, c = colors[i], label=label+'test', linestyle='dashed')
         plt.fill_between(np.arange(len(test_mean)), (test_mean-test_std), (test_mean + test_std), color = colors[i], alpha=.1)
 
@@ -92,6 +98,6 @@ for model in SGD_train:
     plt.title(model)
     plt.tick_params(labelright=True, left=True, right=True)
     plt.xlabel('Epochs')
-    plt.ylabel('Accuracy')
-    #plt.ylim([0.80,1.0])
+    plt.ylabel('Loss')
+    #plt.ylim([0.75,1.0])
     plt.savefig('./imgs/'+data+'_lr'+str(int(lr_select*1e3))+'_'+model+'.png')

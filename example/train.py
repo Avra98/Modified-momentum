@@ -10,6 +10,7 @@ from model.resnet import *
 from model.resnetnbn import *
 from model.densenet import *
 from model.small import *
+from model.vgg import *
 from model.wide_res_net import WideResNet
 from utility.initialize import initialize
 from torch.optim.lr_scheduler import StepLR
@@ -71,7 +72,7 @@ if __name__ == "__main__":
 
     optimizer = SGD(model.parameters(),lr=args.learning_rate, momentum=args.momentum, 
                     weight_decay=args.weight_decay, nesterov=False)
-    scheduler = StepLR(optimizer, step_size = args.epochs-50, gamma=0.1)
+    scheduler = StepLR(optimizer, step_size = args.epochs//3, gamma=0.1)
     for epoch in range(args.epochs):
         model.train()
         log.train(len_dataset=len(dataset.train))
@@ -81,9 +82,11 @@ if __name__ == "__main__":
 
             predictions = model(inputs)
             loss = criterion(predictions, targets)
-            loss.mean().backward(retain_graph=True, create_graph=True)
+            loss.mean().backward()
+
+            #if 'nbn' in args.model.lower():
+            #    torch.nn.utils.clip_grad_value_(model.parameters(), 0.05)
             '''
-            loss.mean().backward(retain_graph=True, create_graph=True)
             max_weight = max_grad = -1.0
             for p in model.parameters():
                 d = torch.max(torch.abs(p.data)).detach().cpu()
@@ -92,11 +95,13 @@ if __name__ == "__main__":
                     max_weight = d
                 if g > max_grad:
                     max_grad = g
+            print("w, g: ", max_weight, max_grad) 
             '''
+
             optimizer.step()
             correct = torch.argmax(predictions.data, 1) == targets
             log(model, loss.cpu(), correct.cpu(), optimizer.param_groups[0]['lr'])
-        #print("w, g: ", max_weight, max_grad)  
+        
         model.eval()
         log.eval(len_dataset=len(dataset.test))
         with torch.no_grad():
