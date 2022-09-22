@@ -28,7 +28,7 @@ if __name__ == "__main__":
     parser.add_argument("--weight_decay", default=0.0000, type=float, help="L2 weight decay.")
     parser.add_argument("--seed", default=42, type=int, help="L2 weight decay.")
     parser.add_argument("--scheduler", "-s", action='store_true', help="whether using scheduler.")
-
+    parser.add_argument("--stepLR", default=250, type=int, help="stepLR.")
     args = parser.parse_args()
 
     initialize(args, seed=args.seed)
@@ -69,7 +69,8 @@ if __name__ == "__main__":
                                           +'model'+str(args.model)
                                           +'seed'+str(args.seed)
                                           +'implicit'+str(int(1000*args.implicit))
-                                          +'scheduler'+str(args.scheduler))
+                                          +'scheduler'+str(args.scheduler)
+                                          +'stepLR'+str(args.stepLR))
 
     #if 'nbn' not in args.model.lower():
     criterion = torch.nn.CrossEntropyLoss(reduce=False)
@@ -78,7 +79,7 @@ if __name__ == "__main__":
 
     optimizer = SGD(model.parameters(),lr=args.learning_rate, momentum=args.momentum, 
                     weight_decay=args.weight_decay, nesterov=False)
-    scheduler = StepLR(optimizer, step_size = args.epochs-50, gamma=0.1)
+    scheduler = StepLR(optimizer, step_size = args.stepLR, gamma=0.1)
 
     for epoch in range(args.epochs):
         model.train()

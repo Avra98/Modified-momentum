@@ -19,7 +19,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", default='resnet18', type=str, help="select optimizer")
     parser.add_argument("--batch_size", default=128, type=int, help="Batch size used in the training and validation loop.")
-    parser.add_argument("--epochs", default=2, type=int, help="Total number of epochs.")
+    parser.add_argument("--epochs", default=300, type=int, help="Total number of epochs.")
     parser.add_argument("--learning_rate", '-lr', default=1e-1, type=float, help="Base learning rate at the start of the training.")
     parser.add_argument("--momentum", '-beta', default=0.8, type=float, help="SGD Momentum.")
     parser.add_argument("--dataset", default="cifar10", type=str, help="dataset name")
@@ -27,6 +27,7 @@ if __name__ == "__main__":
     parser.add_argument("--weight_decay", default=0.0000, type=float, help="L2 weight decay.")
     parser.add_argument("--seed", default=42, type=int, help="L2 weight decay.")
     parser.add_argument("--scheduler", "-s", action='store_true', help="whether using scheduler.")
+    parser.add_argument("--stepLR", default=250, type=int, help="stepLR.")
 
     args = parser.parse_args()
 
@@ -64,7 +65,8 @@ if __name__ == "__main__":
                                           +'beta'+str(int(10*args.momentum))
                                           +'model'+str(args.model)
                                           +'seed'+str(args.seed)
-                                          +'scheduler'+str(args.scheduler))
+                                          +'scheduler'+str(args.scheduler)
+                                          +'stepLR'+str(args.stepLR)))
     #if 'nbn' not in args.model.lower():
     criterion = torch.nn.CrossEntropyLoss(reduce=False)
     #else:
@@ -72,7 +74,7 @@ if __name__ == "__main__":
 
     optimizer = SGD(model.parameters(),lr=args.learning_rate, momentum=args.momentum, 
                     weight_decay=args.weight_decay, nesterov=False)
-    scheduler = StepLR(optimizer, step_size = args.epochs//3, gamma=0.1)
+    scheduler = StepLR(optimizer, step_size = args.stepLR, gamma=0.1)
     for epoch in range(args.epochs):
         model.train()
         log.train(len_dataset=len(dataset.train))
