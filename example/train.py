@@ -66,7 +66,7 @@ if __name__ == "__main__":
                                           +'model'+str(args.model)
                                           +'seed'+str(args.seed)
                                           +'scheduler'+str(args.scheduler)
-                                          +'stepLR'+str(args.stepLR)))
+                                          +'stepLR'+str(args.stepLR))
     #if 'nbn' not in args.model.lower():
     criterion = torch.nn.CrossEntropyLoss(reduce=False)
     #else:
