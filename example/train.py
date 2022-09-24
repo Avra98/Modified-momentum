@@ -4,7 +4,7 @@ import argparse
 import torch, torchvision
 
 from torch.optim import SGD
-from data.cifar import Cifar10, Cifar100, FashionMNIST, MNIST
+from data.cifar import Cifar10, Cifar100, FashionMNIST, MNIST, Cifar10Sub
 from utility.log import Log
 from model.resnet import *
 from model.resnetnbn import *
@@ -28,6 +28,7 @@ if __name__ == "__main__":
     parser.add_argument("--seed", default=42, type=int, help="L2 weight decay.")
     parser.add_argument("--scheduler", "-s", action='store_true', help="whether using scheduler.")
     parser.add_argument("--stepLR", default=250, type=int, help="stepLR.")
+    parser.add_argument("--multigpu", "-m", action='store_true', help="whether using multi-gpus.")
 
     args = parser.parse_args()
 
@@ -68,6 +69,9 @@ if __name__ == "__main__":
         model = VGG('VGG16',num_classes=labels).to(device)    
     else:
         model = smallnet(num_classes=labels).to(device)
+    
+    if args.multigpu:
+        model = torch.nn.DataParallel(model, device_ids=[0,1])
 
     log = Log(log_each=10, file_name= args.dataset+'lr'+str(int(1e3*args.learning_rate))
                                           +'beta'+str(int(10*args.momentum))
