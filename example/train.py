@@ -4,7 +4,7 @@ import argparse
 import torch, torchvision
 
 from torch.optim import SGD
-from data.cifar import Cifar10, Cifar100, FashionMNIST
+from data.cifar import Cifar10, Cifar100, FashionMNIST, MNIST
 from utility.log import Log
 from model.resnet import *
 from model.resnetnbn import *
@@ -13,7 +13,7 @@ from model.small import *
 from model.vgg import *
 from model.wide_res_net import WideResNet
 from utility.initialize import initialize
-from torch.optim.lr_scheduler import StepLR
+from torch.optim.lr_scheduler import StepLR, ReduceLROnPlateau
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -41,12 +41,18 @@ if __name__ == "__main__":
     elif args.dataset.lower() == 'cifar100':
         dataset = Cifar100(args.batch_size, args.threads, size)
         labels = 100
-    else:
+    elif args.dataset.lower() == 'fashionmnist':
         dataset = FashionMNIST(args.batch_size, args.threads, size)
+    elif args.dataset.lower() == 'cifar10sub':
+        dataset = Cifar10Sub(args.batch_size, args.threads, size)
+    else:
+        dataset = MNIST(args.batch_size, args.threads, size)
         
     
     if args.model.lower() == 'resnet18':
         model = ResNet18(num_classes=labels).to(device)
+    elif args.model.lower() == 'resnet34':
+        model = ResNet34(num_classes=labels).to(device)
     elif args.model.lower() == 'resnet50':
         model = ResNet50(num_classes=labels).to(device)
     elif args.model.lower() == 'densenet121':
@@ -58,6 +64,8 @@ if __name__ == "__main__":
         model = ResNet18nbn(num_classes=labels).to(device)
     elif args.model.lower() == 'resnet50nbn':
         model = ResNet50nbn(num_classes=labels).to(device)
+    elif args.model.lower() == 'vgg16':
+        model = VGG('VGG16',num_classes=labels).to(device)    
     else:
         model = smallnet(num_classes=labels).to(device)
 
@@ -74,17 +82,24 @@ if __name__ == "__main__":
 
     optimizer = SGD(model.parameters(),lr=args.learning_rate, momentum=args.momentum, 
                     weight_decay=args.weight_decay, nesterov=False)
-    scheduler = StepLR(optimizer, step_size = args.stepLR, gamma=0.1)
+    #scheduler = StepLR(optimizer, step_size = args.stepLR, gamma=0.1)
+
+
+
+    scheduler = ReduceLROnPlateau(optimizer, patience = 80, factor=0.1)
+    
+
+
     for epoch in range(args.epochs):
         model.train()
         log.train(len_dataset=len(dataset.train))
         for batch in dataset.train:
             inputs, targets = (b.to(device) for b in batch)
             optimizer.zero_grad()
-
             predictions = model(inputs)
             loss = criterion(predictions, targets)
             loss.mean().backward()
+
 
             #if 'nbn' in args.model.lower():
             #    torch.nn.utils.clip_grad_value_(model.parameters(), 0.05)
@@ -114,6 +129,6 @@ if __name__ == "__main__":
                 correct = torch.argmax(predictions, 1) == targets
                 log(model, loss.cpu(), correct.cpu(), optimizer.param_groups[0]['lr'])
         if args.scheduler:
-            scheduler.step()
+            scheduler.step(loss.mean())
            
     log.flush()
