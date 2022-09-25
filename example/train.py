@@ -65,6 +65,8 @@ if __name__ == "__main__":
         model = ResNet18nbn(num_classes=labels).to(device)
     elif args.model.lower() == 'resnet50nbn':
         model = ResNet50nbn(num_classes=labels).to(device)
+    elif args.model.lower() == 'vgg13':
+        model = VGG('VGG13',num_classes=labels).to(device) 
     elif args.model.lower() == 'vgg16':
         model = VGG('VGG16',num_classes=labels).to(device)    
     else:
