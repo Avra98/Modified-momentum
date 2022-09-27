@@ -31,6 +31,7 @@ if __name__ == "__main__":
     parser.add_argument("--scheduler", default='stepLR', type=str, help="select scheduler.")
     parser.add_argument("--multigpu", "-m", action='store_true', help="whether using multi-gpus.")
     parser.add_argument("--noise_level", '-nl', type=float, default=0.0, help="noise level for PGD")
+    parser.add_argument("--rho", '-rho', type=float, default=0.0, help="rho for SAM")
     parser.add_argument("--optimizer", type=str, default='SGD', help="SGD/SAM")
 
     args = parser.parse_args()
@@ -85,7 +86,8 @@ if __name__ == "__main__":
                                           +'scheduler'+args.scheduler
                                           +'patience'+str(args.patience)
                                           +'nl'+str(int(1e4*args.noise_level))
-                                          +'optimizer'+args.optimizer)
+                                          +'optimizer'+args.optimizer
+                                          +'rho'+str(int(1e4*args.rho)))
     #if 'nbn' not in args.model.lower():
     criterion = torch.nn.CrossEntropyLoss(reduce=False)
     #else:
@@ -95,7 +97,8 @@ if __name__ == "__main__":
         optimizer = SGD(model.parameters(),lr=args.learning_rate, momentum=args.momentum, 
                         weight_decay=args.weight_decay, nesterov=False)
     else:
-        optimizer = SAM(model.parameters(), SGD, lr=args.learning_rate, momentum=args.momentum)
+        optimizer = SAM(model.parameters(), SGD, lr=args.learning_rate, momentum=args.momentum, 
+             rho=args.rho, weight_decay=args.weight_decay)
     
     if args.scheduler.lower() == 'steplr':
         scheduler = StepLR(optimizer, step_size = args.patience, gamma=0.1)
