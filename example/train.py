@@ -140,13 +140,6 @@ if __name__ == "__main__":
 
             correct = torch.argmax(predictions.data, 1) == targets
             log(model, loss.cpu(), correct.cpu(), optimizer.param_groups[0]['lr'])
-        
-            def closure():
-                loss = criterion(output, model(input))
-                loss.backward()
-                return loss
-
-           
 
         model.eval()
         log.eval(len_dataset=len(dataset.test))
