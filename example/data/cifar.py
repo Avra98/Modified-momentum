@@ -153,7 +153,7 @@ class MNIST:
         ])
 
         train_set = torchvision.datasets.MNIST(root='./data', train=True, download=True, transform=train_transform)
-        mask = torch.utils.data.Subset(train_set, list(range(0, 1000)))
+        mask = torch.utils.data.Subset(train_set, list(range(0, batch_size)))
         test_set = torchvision.datasets.MNIST(root='./data', train=False, download=True, transform=test_transform)
 
         self.train = torch.utils.data.DataLoader(mask, batch_size=batch_size, shuffle=True, num_workers=threads)

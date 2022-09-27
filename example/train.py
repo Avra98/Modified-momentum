@@ -11,6 +11,7 @@ from model.resnetnbn import *
 from model.densenet import *
 from model.small import *
 from model.vgg import *
+from utility.sam import SAM
 from model.wide_res_net import WideResNet
 from utility.initialize import initialize
 from torch.optim.lr_scheduler import StepLR, ReduceLROnPlateau
@@ -26,9 +27,11 @@ if __name__ == "__main__":
     parser.add_argument("--threads", default=4, type=int, help="Number of CPU threads for dataloaders.")
     parser.add_argument("--weight_decay", default=0.0000, type=float, help="L2 weight decay.")
     parser.add_argument("--seed", default=42, type=int, help="L2 weight decay.")
-    parser.add_argument("--scheduler", "-s", action='store_true', help="whether using scheduler.")
-    parser.add_argument("--stepLR", default=250, type=int, help="stepLR.")
+    parser.add_argument("--patience", default=250, type=int, help="patience for scheduler.")
+    parser.add_argument("--scheduler", default='stepLR', type=str, help="select scheduler.")
     parser.add_argument("--multigpu", "-m", action='store_true', help="whether using multi-gpus.")
+    parser.add_argument("--noise_level", '-nl', type=float, default=0.0, help="noise level for PGD")
+    parser.add_argument("--optimizer", type=str, default='SGD', help="SGD/SAM")
 
     args = parser.parse_args()
 
@@ -79,52 +82,69 @@ if __name__ == "__main__":
                                           +'beta'+str(int(10*args.momentum))
                                           +'model'+str(args.model)
                                           +'seed'+str(args.seed)
-                                          +'scheduler'+str(args.scheduler)
-                                          +'stepLR'+str(args.stepLR))
+                                          +'scheduler'+args.scheduler
+                                          +'patience'+str(args.patience)
+                                          +'nl'+str(int(1e4*args.noise_level))
+                                          +'optimizer'+args.optimizer)
     #if 'nbn' not in args.model.lower():
     criterion = torch.nn.CrossEntropyLoss(reduce=False)
     #else:
     #    criterion = torch.nn.CrossEntropyLoss(reduce=False, label_smoothing=1.0/labels)
 
-    optimizer = SGD(model.parameters(),lr=args.learning_rate, momentum=args.momentum, 
-                    weight_decay=args.weight_decay, nesterov=False)
-    #scheduler = StepLR(optimizer, step_size = args.stepLR, gamma=0.1)
-
-
-
-    scheduler = ReduceLROnPlateau(optimizer, patience = 80, factor=0.1)
+    if args.optimizer.lower() == 'sgd':
+        optimizer = SGD(model.parameters(),lr=args.learning_rate, momentum=args.momentum, 
+                        weight_decay=args.weight_decay, nesterov=False)
+    else:
+        optimizer = SAM(model.parameters(), SGD, lr=args.learning_rate, momentum=args.momentum)
     
-
+    if args.scheduler.lower() == 'steplr':
+        scheduler = StepLR(optimizer, step_size = args.patience, gamma=0.1)
+    else:
+        scheduler = ReduceLROnPlateau(optimizer, patience = args.patience, factor=0.1)
 
     for epoch in range(args.epochs):
         model.train()
         log.train(len_dataset=len(dataset.train))
         for batch in dataset.train:
+
+            def closure():
+                loss = criterion(model(inputs), targets)
+                loss.mean().backward()
+                return loss
+
+            if args.noise_level > 0:
+                noise_list = []
+                for param in model.parameters():
+                    noise = torch.randn(param.data.size()).to(device)*args.noise_level
+                    param.data += noise
+                    noise_list.append(noise)
+
             inputs, targets = (b.to(device) for b in batch)
             optimizer.zero_grad()
             predictions = model(inputs)
             loss = criterion(predictions, targets)
             loss.mean().backward()
 
+            if args.optimizer.lower() == 'sam':
+                optimizer.step(closure)
+            else:
+                optimizer.step()
 
-            #if 'nbn' in args.model.lower():
-            #    torch.nn.utils.clip_grad_value_(model.parameters(), 0.05)
-            '''
-            max_weight = max_grad = -1.0
-            for p in model.parameters():
-                d = torch.max(torch.abs(p.data)).detach().cpu()
-                g = torch.max(torch.abs(p.grad)).detach().cpu()
-                if d > max_weight:
-                    max_weight = d
-                if g > max_grad:
-                    max_grad = g
-            print("w, g: ", max_weight, max_grad) 
-            '''
+            if args.noise_level > 0:
+                for param in model.parameters():
+                    param.data -= noise_list[0].to(device)
+                    noise_list = noise_list[1:]
 
-            optimizer.step()
             correct = torch.argmax(predictions.data, 1) == targets
             log(model, loss.cpu(), correct.cpu(), optimizer.param_groups[0]['lr'])
         
+            def closure():
+                loss = criterion(output, model(input))
+                loss.backward()
+                return loss
+
+           
+
         model.eval()
         log.eval(len_dataset=len(dataset.test))
         with torch.no_grad():
