@@ -39,11 +39,10 @@ def variance_vec_prod(net, criterion, dataloader, v):
 def hessian_vec_prod(net, criterion, dataloader, v):
     Hv_t = 0
     n_batchs = len(dataloader)
-    dataloader.idx = 0
+    loader = iter(dataloader)
     for _ in range(n_batchs):
-        bx, by = next(dataloader)
+        bx, by = next(loader)
         Hv_t += Hv_batch(net, criterion, bx.cuda(), by.cuda(), v)
-
     return Hv_t/n_batchs
 
 

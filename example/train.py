@@ -149,9 +149,9 @@ if __name__ == "__main__":
 
         model.eval()
         if epoch%15 == 0 and args.regularization:            
-            sharpness = get_sharpness(model, criterion, iter(dataset.train), n_iters=10, verbose=False, tol=1e-4)
-            trace = get_trace(model, criterion, iter(dataset.train), n_iters=5)
-            fnorm = get_Fnorm(model, criterion, iter(dataset.train), n_iters=5)
+            sharpness = get_sharpness(model, criterion, dataset.train, n_iters=10, verbose=False, tol=1e-4)
+            trace = get_trace(model, criterion, dataset.train, n_iters=5)
+            fnorm = get_Fnorm(model, criterion, dataset.train, n_iters=5)
             print('Sharpness:%.2f,Trace:%.2f,Fnorm:%.2f'%(sharpness,trace,fnorm))
             hessian.append([sharpness,trace,fnorm])
 
