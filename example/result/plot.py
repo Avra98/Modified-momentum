@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import make_interp_spline
 from matplotlib.ticker import FormatStrFormatter
 
-root = './imgs/mnist_different_lr(good results)/'
+root = './'
 lr_select = 0.1
 data = 'mnist'
 seed_select = ['42','100','1000']
@@ -25,6 +25,17 @@ for file in files:
             seed = file.split('seed')[1].split('scheduler')[0]
         else:
             seed = file.split('seed')[1].split('implicit')[0]
+        
+        optimizer = file.split('optimizer')[1].split('rho')[0]
+        rho = file.split('rho')[1].split('.')[0]
+        nl = file.split('nl')[1].split('optimizer')[0]
+        if nl not in ['50','0']:
+            continue
+
+        if optimizer == 'sam':
+            optimizer = optimizer.upper() + ' rho:'+str(float(rho)/1e4)
+        else:
+            optimizer += ' std:'+str(float(nl)/1e4)
 
         dataset = file.split('lr')[0]
         scheduler = file.split('scheduler')
@@ -33,7 +44,9 @@ for file in files:
             scheduler = 'False'
         else:
             scheduler = scheduler[1].split('.')[0]
-              
+        
+        if data != dataset:
+            continue
         #if abs(float(lr)/(1-float(beta)) - lr_select)>1e-3 or data != dataset or seed not in seed_select: 
         #    continue
         
@@ -41,7 +54,7 @@ for file in files:
         if dataset == 'fashion': dataset = 'fashionmnist'
         if 'nbn' in model: model = model[:-3]
 
-        key = dataset +':'+'beta='+beta+',lr='+lr+',('+model+')'
+        key = dataset +':'+'beta='+beta+',lr='+lr+',('+model+')'+optimizer
         if "implicit" in file:
             key = dataset +':'+'beta='+beta+',lr='+lr+",implicit"+',('+model+')'
        
@@ -70,14 +83,14 @@ for file in files:
                     SGD_train[model][key][seed] = []
                     SGD_test[model][key][seed] = []
                 
-                #SGD_train[model][key][seed].append(float(lst[2].split("│")[1][:-3])/100.)
-                #SGD_test[model][key][seed].append(float(lst[-2].split("│")[1][:-3])/100.)
-                SGD_train[model][key][seed].append(float(lst[2].split("│")[0][:-3]))
-                SGD_test[model][key][seed].append(float(lst[-2].split("│")[0][:-3]))
+                SGD_train[model][key][seed].append(float(lst[2].split("│")[1][:-3])/100.)
+                SGD_test[model][key][seed].append(float(lst[-2].split("│")[1][:-3])/100.)
+                #SGD_train[model][key][seed].append(float(lst[2].split("│")[0][:-3]))
+                #SGD_test[model][key][seed].append(float(lst[-2].split("│")[0][:-3]))
 
                 epoch_last=epoch
 
-colors = ['brown','#fc8d62','black','#80b1d3','#fdb462','#ffd92f','#e5c494','#b3b3b3']
+colors = ['brown','#fc8d62','black','#80b1d3','#fdb462','#ffd92f','#e5c494','#b3b3b3','#d9d9d9', '#bc80bd','#ffff99','#fb9a99']
 if break_plot == False:
     for model in SGD_train:       
         plt.figure(figsize=(8,6))
@@ -131,10 +144,12 @@ if break_plot == False:
 else:
 
     for model in SGD_train:       
-        fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=(8,6),gridspec_kw={'height_ratios': [1, 3]})
+        fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=(8,6),gridspec_kw={'height_ratios': [3, 1]})
         for i, key in enumerate(sorted(SGD_train[model].keys())):
-            label = key.split(':')[1].split('(')[0].split(',')[1] + ' '
-            
+            print(key)
+            label = key.split(':')[1].split('(')[0]#.split(',')[1] + ' '
+            label += key.split(' ')[1] + ' '
+
             train = []
             for seed in SGD_train[model][key]:
                 train.append(SGD_train[model][key][seed])
@@ -169,8 +184,8 @@ else:
             ax2.plot(train_mean, c = colors[i], label=label+'train')
             ax2.fill_between(np.arange(len(train_mean)), (train_mean-train_std), (train_mean+train_std), color = colors[i], alpha=.1)
 
-            ax1.set_ylim(.90, 1.) 
-            ax2.set_ylim(.0, .4)
+            ax1.set_ylim(.92, 1.) 
+            ax2.set_ylim(.0, .6)
 
             ax1.spines['bottom'].set_visible(False)
             ax2.spines['top'].set_visible(False)
@@ -182,7 +197,7 @@ else:
             ax2.plot([0, 1], [1, 1], transform=ax2.transAxes, **kwargs)
 
         #ax1.legend(prop={'size': 12}, bbox_to_anchor=(0.5, 0.93, 0.5, 0.5), ncol=2)
-        ax1.legend(prop={'size': 12}, ncol=3)
+        ax2.legend(prop={'size': 8}, ncol=2)
         #ax1.title.set_text(model)
         ax1.tick_params(labelright=True, left=True, right=True, bottom=False, labelsize=16)
         ax1.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
@@ -190,6 +205,6 @@ else:
         ax2.tick_params(labelright=True, left=True, right=True, labelsize=16)
         plt.xlabel('Epochs', fontsize=16)
         #plt.ylabel('Accuracy', fontsize=16)
-        fig.text(0.02, 0.5, 'Loss', va='center', rotation='vertical', fontsize=16)
-        plt.savefig('./imgs/'+data+'_lr'+str(int(lr_select*1e3))+'_'+model+'.png')
+        fig.text(0.02, 0.5, 'Accuracy', va='center', rotation='vertical', fontsize=16)
+        plt.savefig('./imgs/'+data+'_lr'+str(int(lr_select*1e3))+'_'+model+'.png', dpi=1000)
 

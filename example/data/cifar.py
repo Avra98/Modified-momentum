@@ -19,7 +19,6 @@ class Cifar100:
         ])
 
         test_transform = transforms.Compose([
-            torchvision.transforms.Resize(size=size),
             transforms.ToTensor(),
             transforms.Normalize(mean, std)
         ])
@@ -49,7 +48,6 @@ class Cifar10:
         ])
 
         test_transform = transforms.Compose([
-            torchvision.transforms.Resize(size=size),
             transforms.ToTensor(),
             transforms.Normalize(mean, std)
         ])
@@ -79,7 +77,6 @@ class Cifar10Sub:
         ])
 
         test_transform = transforms.Compose([
-            torchvision.transforms.Resize(size=size),
             transforms.ToTensor(),
             transforms.Normalize(mean, std)
         ])

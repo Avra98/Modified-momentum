@@ -15,6 +15,7 @@ from utility.sam import SAM
 from model.wide_res_net import WideResNet
 from utility.initialize import initialize
 from torch.optim.lr_scheduler import StepLR, ReduceLROnPlateau
+from utility.linalg import get_sharpness, get_trace, get_Fnorm, get_nonuniformity
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -33,6 +34,7 @@ if __name__ == "__main__":
     parser.add_argument("--noise_level", '-nl', type=float, default=0.0, help="noise level for PGD")
     parser.add_argument("--rho", '-rho', type=float, default=0.0, help="rho for SAM")
     parser.add_argument("--optimizer", type=str, default='SGD', help="SGD/SAM")
+    parser.add_argument("--regularization", "-reg", action='store_true', help="if get trace/Fnorm/spectral norm")
 
     args = parser.parse_args()
 
@@ -142,6 +144,12 @@ if __name__ == "__main__":
             log(model, loss.cpu(), correct.cpu(), optimizer.param_groups[0]['lr'])
 
         model.eval()
+        if epoch%10 == 0 and args.regularization:            
+            sharpness = get_sharpness(model, criterion, iter(dataset.train), n_iters=10, verbose=False, tol=1e-4)
+            trace = get_trace(model, criterion, iter(dataset.train), n_iters=5)
+            fnorm = get_Fnorm(model, criterion, iter(dataset.train), n_iters=5)
+            print('Sharpness:%.2f,Trace:%.2f,Fnorm:%.2f'%(sharpness,trace,fnorm))
+
         log.eval(len_dataset=len(dataset.test))
         with torch.no_grad():
             for batch in dataset.test:
