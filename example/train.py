@@ -1,5 +1,6 @@
 import sys; sys.path.append("..")
 
+import numpy as np
 import argparse
 import torch, torchvision
 
@@ -80,8 +81,8 @@ if __name__ == "__main__":
     
     if args.multigpu:
         model = torch.nn.DataParallel(model, device_ids=[0,1])
-
-    log = Log(log_each=10, file_name= args.dataset+'lr'+str(int(1e3*args.learning_rate))
+    
+    file_name = args.dataset+'lr'+str(int(1e3*args.learning_rate))
                                           +'beta'+str(int(10*args.momentum))
                                           +'model'+str(args.model)
                                           +'seed'+str(args.seed)
@@ -89,7 +90,10 @@ if __name__ == "__main__":
                                           +'patience'+str(args.patience)
                                           +'nl'+str(int(1e4*args.noise_level))
                                           +'optimizer'+args.optimizer
-                                          +'rho'+str(int(1e4*args.rho)))
+                                          +'rho'+str(int(1e4*args.rho))
+
+    log = Log(log_each=10, file_name=file_name)
+    hessian = []
     #if 'nbn' not in args.model.lower():
     criterion = torch.nn.CrossEntropyLoss(reduce=False)
     #else:
@@ -144,11 +148,12 @@ if __name__ == "__main__":
             log(model, loss.cpu(), correct.cpu(), optimizer.param_groups[0]['lr'])
 
         model.eval()
-        if epoch%10 == 0 and args.regularization:            
+        if epoch%15 == 0 and args.regularization:            
             sharpness = get_sharpness(model, criterion, iter(dataset.train), n_iters=10, verbose=False, tol=1e-4)
             trace = get_trace(model, criterion, iter(dataset.train), n_iters=5)
             fnorm = get_Fnorm(model, criterion, iter(dataset.train), n_iters=5)
             print('Sharpness:%.2f,Trace:%.2f,Fnorm:%.2f'%(sharpness,trace,fnorm))
+            hessian.append([sharpness,trace,fnorm])
 
         log.eval(len_dataset=len(dataset.test))
         with torch.no_grad():
@@ -160,5 +165,5 @@ if __name__ == "__main__":
                 log(model, loss.cpu(), correct.cpu(), optimizer.param_groups[0]['lr'])
         if args.scheduler:
             scheduler.step(loss.mean())
-           
     log.flush()
+np.save('./result/'+file_name+'.npy', hessian)  
