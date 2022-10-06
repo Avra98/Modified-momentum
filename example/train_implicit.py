@@ -7,7 +7,10 @@ from torch.optim import SGD
 from data.cifar import Cifar10, Cifar100, FashionMNIST
 from utility.log import Log
 from model.resnet import *
+from model.resnetnbn import *
 from model.densenet import *
+from model.small import *
+from model.vgg import *
 from model.wide_res_net import WideResNet
 from utility.initialize import initialize
 from torch.optim.lr_scheduler import StepLR
@@ -25,7 +28,7 @@ if __name__ == "__main__":
     parser.add_argument("--weight_decay", default=0.0000, type=float, help="L2 weight decay.")
     parser.add_argument("--seed", default=42, type=int, help="L2 weight decay.")
     parser.add_argument("--scheduler", "-s", action='store_true', help="whether using scheduler.")
-
+    parser.add_argument("--stepLR", default=250, type=int, help="stepLR.")
     args = parser.parse_args()
 
     initialize(args, seed=args.seed)
@@ -51,6 +54,14 @@ if __name__ == "__main__":
     elif args.model.lower() == 'wide':
         model = WideResNet(depth=16, width_factor=8, dropout=0.0, 
                     in_channels=3, labels=labels).to(device)
+    elif args.model.lower() == 'resnet18nbn':
+        model = ResNet18nbn(num_classes=labels).to(device)
+    elif args.model.lower() == 'resnet50nbn':
+        model = ResNet50nbn(num_classes=labels).to(device)    
+    elif args.model.lower() == 'vgg19':
+        model = VGG('VGG19',num_classes=labels).to(device)    
+    else:
+        model = smallnet(num_classes=labels).to(device)
 
 
     log = Log(log_each=10, file_name= args.dataset+'lr'+str(int(1e3*args.learning_rate))
@@ -58,12 +69,17 @@ if __name__ == "__main__":
                                           +'model'+str(args.model)
                                           +'seed'+str(args.seed)
                                           +'implicit'+str(int(1000*args.implicit))
-                                          +'scheduler'+str(args.scheduler))
+                                          +'scheduler'+str(args.scheduler)
+                                          +'stepLR'+str(args.stepLR))
 
+    #if 'nbn' not in args.model.lower():
     criterion = torch.nn.CrossEntropyLoss(reduce=False)
+    #else:
+    #    criterion = torch.nn.CrossEntropyLoss(reduce=False, label_smoothing=1.0/labels)
+
     optimizer = SGD(model.parameters(),lr=args.learning_rate, momentum=args.momentum, 
                     weight_decay=args.weight_decay, nesterov=False)
-    scheduler = StepLR(optimizer, step_size = args.epochs-100, gamma=0.1)
+    scheduler = StepLR(optimizer, step_size = args.stepLR, gamma=0.1)
 
     for epoch in range(args.epochs):
         model.train()
