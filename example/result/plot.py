@@ -5,12 +5,12 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import make_interp_spline
 from matplotlib.ticker import FormatStrFormatter
 
-root = './'
+root = './3norm/'
 lr_select = 0.1
-data = 'mnist'
+data = 'cifar10'
 seed_select = ['42','100','1000']
 winSize = 5
-break_plot = True 
+break_plot = False 
 
 files = os.listdir(root)
 SGD_train,SGD_test = {},{}
@@ -29,10 +29,10 @@ for file in files:
         optimizer = file.split('optimizer')[1].split('rho')[0]
         rho = file.split('rho')[1].split('.')[0]
         nl = file.split('nl')[1].split('optimizer')[0]
-        if nl not in ['50','0']:
-            continue
+        #if nl not in ['50','0']:
+        #    continue
 
-        if optimizer == 'sam':
+        if optimizer.lower() == 'sam':
             optimizer = optimizer.upper() + ' rho:'+str(float(rho)/1e4)
         else:
             optimizer += ' std:'+str(float(nl)/1e4)
@@ -93,17 +93,19 @@ for file in files:
 colors = ['brown','#fc8d62','black','#80b1d3','#fdb462','#ffd92f','#e5c494','#b3b3b3','#d9d9d9', '#bc80bd','#ffff99','#fb9a99']
 if break_plot == False:
     for model in SGD_train:       
-        plt.figure(figsize=(8,6))
+        plt.figure(figsize=(12,6))
 
         for i, key in enumerate(sorted(SGD_train[model].keys())):
-            label = key.split(':')[1].split('(')[0]
-            
+            #label = key.split(':')[1].split('(')[0]
+            print(key)
+            label = key.split(':')[1].split('(')[0]+key.split(')')[1] + ' '
+
             train = []
             for seed in SGD_train[model][key]:
                 # train = pd.Series(SGD_train[model][key])
                 # train_mean = train.rolling(5).mean().values[4:]
                 # train_std  = train.rolling(5).std().values[4:]
-                train.append(SGD_train[model][key][seed][:250])
+                train.append(SGD_train[model][key][seed])
      
             train = np.array(train)
             train_mean = []
@@ -118,7 +120,7 @@ if break_plot == False:
 
             test = []
             for seed in SGD_test[model][key]:
-                test.append(SGD_test[model][key][seed][:250])
+                test.append(SGD_test[model][key][seed])
 
             test = np.array(test)
             test_mean = []
@@ -131,7 +133,7 @@ if break_plot == False:
             plt.plot(test_mean, c = colors[i], label=label+'test', linestyle='dashed')
             plt.fill_between(np.arange(len(test_mean)), (test_mean-test_std), (test_mean + test_std), color = colors[i], alpha=.2)
             
-            print(key, round(test_mean[-1], 3), round(test_std[-1], 3))
+            #print(key, round(test_mean[-1], 3), round(test_std[-1], 3))
         plt.legend(prop={'size': 12}, ncol=2)
         #plt.title(model)
         plt.tick_params(labelright=True, left=True, right=True)

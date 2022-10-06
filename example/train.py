@@ -156,6 +156,7 @@ if __name__ == "__main__":
             hessian.append([sharpness,trace,fnorm])
 
         log.eval(len_dataset=len(dataset.test))
+        loss_all, count = 0.0, 0.0
         with torch.no_grad():
             for batch in dataset.test:
                 inputs, targets = (b.to(device) for b in batch)
@@ -163,7 +164,12 @@ if __name__ == "__main__":
                 loss = criterion(predictions, targets)
                 correct = torch.argmax(predictions, 1) == targets
                 log(model, loss.cpu(), correct.cpu(), optimizer.param_groups[0]['lr'])
-        if args.scheduler:
-            scheduler.step(loss.mean())
+                loss_all += loss.mean().cpu()*inputs.shape[0]
+                count += inputs.shape[0]
+        
+        if args.scheduler.lower() == 'steplr':
+            scheduler.step()
+        else:
+            scheduler.step(loss_all/count)
     log.flush()
 np.save('./result/'+file_name+'.npy', hessian)  
