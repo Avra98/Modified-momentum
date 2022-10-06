@@ -82,15 +82,15 @@ if __name__ == "__main__":
     if args.multigpu:
         model = torch.nn.DataParallel(model, device_ids=[0,1])
     
-    file_name = args.dataset+'lr'+str(int(1e3*args.learning_rate))
-                                          +'beta'+str(int(10*args.momentum))
-                                          +'model'+str(args.model)
-                                          +'seed'+str(args.seed)
-                                          +'scheduler'+args.scheduler
-                                          +'patience'+str(args.patience)
-                                          +'nl'+str(int(1e4*args.noise_level))
-                                          +'optimizer'+args.optimizer
-                                          +'rho'+str(int(1e4*args.rho))
+    file_name = (args.dataset+'lr'+str(int(1e3*args.learning_rate))
+                  +'beta'+str(int(10*args.momentum))
+                  +'model'+str(args.model)
+                  +'seed'+str(args.seed)
+                  +'scheduler'+args.scheduler
+                  +'patience'+str(args.patience)
+                  +'nl'+str(int(1e4*args.noise_level))
+                  +'optimizer'+args.optimizer
+                  +'rho'+str(int(1e4*args.rho)))
 
     log = Log(log_each=10, file_name=file_name)
     hessian = []
